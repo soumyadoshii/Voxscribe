@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voxscribe - AI Voice Cloner</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f111a; color: #f0f0f0; display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; margin: 0;">
+
+  <h1 style="color: #00ffd5; margin-bottom: 30px;">Voxscribe - AI Voice Cloner</h1>
+
+  <div style="background: #1a1c2b; padding: 25px; border-radius: 15px; width: 400px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 0 20px #00ffd5;">
+    
+    <h2 style="color: #00ffd5; margin-bottom: 15px;">Upload Your Voice (.wav)</h2>
+    <input type="file" id="audioFile" accept=".wav"
+           style="padding: 8px; border-radius: 10px; border: none; margin-bottom: 20px; background: #0f111a; color: #f0f0f0;">
+    <audio id="audioPlayer" controls style="width: 100%; margin-bottom: 20px;"></audio>
+
+    <h2 style="color: #00ffd5; margin-bottom: 15px;">Enter Text to Clone Voice</h2>
+    <input type="text" id="voiceText" placeholder="Type your text here..." 
+           style="width: 100%; padding: 10px; border-radius: 10px; border: none; margin-bottom: 20px; background: #0f111a; color: #f0f0f0;">
+
+    <button id="generateBtn" 
+            style="padding: 12px 20px; border-radius: 10px; border: none; background: #00ffd5; color: #0f111a; font-weight: bold; cursor: pointer; transition: 0.3s;">Generate Voice</button>
+
+    <audio id="generatedAudio" controls style="width: 100%; margin-top: 20px;"></audio>
+  </div>
+
+  <script>
+    const audioFile = document.getElementById('audioFile');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const voiceText = document.getElementById('voiceText');
+    const generateBtn = document.getElementById('generateBtn');
+    const generatedAudio = document.getElementById('generatedAudio');
+
+    let uploadedFile = null;
+
+    // Preview uploaded WAV file
+    audioFile.addEventListener('change', () => {
+      if (!audioFile.files.length) return;
+      const file = audioFile.files[0];
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'wav') {
+        alert("Only WAV files are supported!");
+        return;
+      }
+      uploadedFile = file;
+      audioPlayer.src = URL.createObjectURL(file);
+    });
+
+    // Generate cloned voice
+    generateBtn.addEventListener('click', async () => {
+      const text = voiceText.value.trim();
+      if (!text) {
+        alert("Please enter some text!");
+        return;
+      }
+      if (!uploadedFile) {
+        alert("Please upload a WAV file first!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('text', text);
+      formData.append('voice', uploadedFile);
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Failed to generate audio");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        generatedAudio.src = url;
+        generatedAudio.play();
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
